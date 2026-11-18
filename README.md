@@ -1,47 +1,207 @@
-# MeritCoin
+# MeritCoin — guia completo de uso
 
-Aplicação React + Spring Boot para reconhecimento acadêmico. A imagem Docker serve a interface e a API na mesma origem. O banco de produção é PostgreSQL e os emails reais são enviados pela API HTTP da Brevo para o endereço cadastrado do aluno e da empresa.
+O MeritCoin é um sistema de reconhecimento acadêmico. Professores recebem moedas virtuais e podem enviá-las a alunos de seus cursos como reconhecimento. Alunos acompanham o saldo e trocam moedas por vantagens publicadas por empresas parceiras. O administrador organiza instituições, cursos e semestres.
 
-## Desenvolvimento local
+> **Comece aqui:** se esta é a primeira utilização do site, siga a seção [Primeiro uso: ordem correta](#primeiro-uso-ordem-correta). Cada pessoa deve criar sua própria conta no perfil apropriado. As moedas **MC** são pontos virtuais do sistema, não dinheiro.
 
-Requisitos: Java 17+, Node 20+, Docker. Execute `docker compose up -d` na raiz. Em `backend`, execute `./mvnw spring-boot:run` (Windows: `.\mvnw.cmd spring-boot:run`; defina `JAVA_HOME`). Em `frontend`, execute `npm ci` e `npm run dev`. Abra `http://localhost:5173`. O Vite encaminha `/api` para a API local. Por padrão, o MailHog recebe as mensagens locais em `http://localhost:8025`.
+## Acessar o site
 
-Antes de cadastrar pessoas, entre como administrador em `admin@meritcoin.local` com `admin123` **somente no ambiente local** e crie instituição e curso. Em produção, defina `ADMIN_EMAIL` e uma senha forte em `ADMIN_PASSWORD`.
+1. Abra o endereço [público do MeritCoin](https://meritcoins.onrender.com/) fornecido pelo responsável pelo projeto 
+2. Aguarde a tela com as opções **Entrar** e **Criar conta**. 
+3. Se você já tem conta, use **Entrar**, informe o **email e a senha cadastrados** e clique em **Entrar na plataforma**.
+4. Se ainda não tem conta, use **Criar conta** e siga a seção do seu perfil abaixo.
 
-Cada conta nova exige senha de pelo menos 8 caracteres. O login usa email e senha. Contas antigas criadas pela versão anterior não possuem senha e exigem migração de senhas; em uma instalação nova, comece com banco vazio. Recadastro com o mesmo email em um banco antigo é bloqueado pela unicidade do cadastro.
+O endereço de email precisa ser verdadeiro e acessível: ele recebe avisos de moedas e cupons. O sistema não pede CPF ou CNPJ na tela de login; esses documentos são informados no cadastro. Se aparecer **Credenciais inválidas**, confira email e senha. Atualmente não há botão de recuperação de senha na tela de login.
 
-## Publicação gratuita: Render + Neon + Brevo
+## Primeiro uso: ordem correta
 
-1. Envie esta pasta para um repositório GitHub. Não envie arquivos `.env` nem credenciais.
-2. Crie um projeto no [Neon](https://neon.com/) no plano Free e anote host, nome do banco, usuário e senha na tela **Connect**. Use conexão direta. O banco do Render Free expira em 30 dias; por isso esta aplicação usa Neon.
-3. Crie conta na [Brevo](https://www.brevo.com/), cadastre e verifique um remetente em **Senders**, ative emails transacionais e crie uma chave API (não a chave SMTP). O remetente verificado será `MAIL_FROM`. Os destinatários serão sempre os emails que os usuários cadastrarem. O plano gratuito oferece 300 envios por dia.
-4. No [Render](https://render.com/), crie **New > Web Service**, conecte o repositório, escolha **Docker** e o plano **Free**. Use `Dockerfile` na raiz. Não crie um banco no Render.
-5. Em **Environment**, configure as variáveis abaixo. A URL JDBC separa host/banco de usuário/senha; não cole a URL `postgresql://usuario:senha@...` diretamente. Mantenha `?sslmode=require`.
+Para que todas as opções de cadastro e reconhecimento funcionem, siga esta sequência:
 
-   ```text
-   DATABASE_URL=jdbc:postgresql://HOST_DO_NEON:5432/NOME_DO_BANCO?sslmode=require
-   DATABASE_USER=USUARIO_DO_NEON
-   DATABASE_PASSWORD=SENHA_DO_NEON
-   ADMIN_EMAIL=seu-email@example.com
-   ADMIN_PASSWORD=uma-senha-forte-e-unica
-   BREVO_API_KEY=sua-chave-api
-   MAIL_FROM=remetente-verificado@example.com
-   ```
+1. **Administrador:** entra com as credenciais configuradas pelo responsável técnico e cadastra pelo menos uma instituição e um curso.
+2. **Professor:** cria sua conta, escolhe a instituição e o curso que leciona.
+3. **Aluno:** cria sua conta, escolhe a mesma instituição e se matricula no curso do professor. Pode selecionar vários cursos dessa instituição.
+4. **Empresa parceira:** cria sua conta e publica pelo menos uma vantagem.
+5. **Administrador:** inicia um semestre. Nesse momento, cada professor **já cadastrado** recebe 1.000 MC.
+6. **Professor:** envia moedas e uma mensagem ao aluno matriculado em seu curso.
+7. **Aluno:** consulta saldo e extrato, resgata uma vantagem se tiver moedas suficientes e recebe o cupom por email.
+8. **Empresa:** recebe por email o código do mesmo resgate para conferência presencial.
 
-6. Publique o serviço. Abra a URL `https://...onrender.com`. O Dockerfile compila o frontend e o backend e o Spring serve ambos. A URL da API será a mesma origem com prefixo `/api`; não é preciso configurar CORS ou endereço de API no navegador.
-7. Entre como administrador com `ADMIN_EMAIL`/`ADMIN_PASSWORD`, crie instituição e curso. Cadastre aluno, professor e empresa com emails reais. Inicie um semestre, transfira moedas, resgate uma vantagem e confira as caixas de entrada do aluno e da empresa. Se a Brevo rejeitar o remetente, confira a verificação do sender e a chave API.
+Se o professor for cadastrado **depois** do início do semestre, ele não recebe o crédito daquele início automaticamente. O próximo início de semestre creditará os professores existentes naquele momento.
 
-O serviço gratuito do Render hiberna após 15 minutos sem tráfego; a primeira visita pode levar cerca de um minuto. O plano Free tem limites mensais. O banco Neon Free também tem cotas. O envio real não pode ser testado sem a sua chave Brevo e um remetente verificado.
+## Perfis e o que cada um faz
 
-## Funcionalidades e API
+- **Administrador:** cadastra, edita e remove instituições e cursos; inicia e finaliza semestres; consulta o histórico de semestres.
+- **Professor:** consulta saldo e extrato, vê alunos do curso que leciona e envia moedas com uma mensagem.
+- **Aluno:** consulta saldo, extrato e cursos; adiciona ou remove matrículas; vê vantagens disponíveis e resgata cupons.
+- **Empresa parceira:** cadastra, edita e remove suas vantagens; recebe por email os códigos dos resgates.
 
-- Instituições e cursos: criar, listar, editar, excluir. A exclusão é impedida se houver vínculos.
-- Matrículas: criar, listar, remover.
-- Vantagens: criar, listar, editar, desativar (remoção lógica para preservar histórico de resgates).
-- Semestres: iniciar, finalizar e listar.
-- Movimentações e resgates são registros financeiros imutáveis; não há edição ou exclusão direta para preservar o extrato.
-- Conta: cadastro, consulta, edição de nome/email/endereço/senha e desativação lógica. Professor só transfere de sua própria carteira para aluno de seu curso; aluno só resgata para si; empresa só altera suas vantagens; administrador gerencia catálogo e semestres.
+O perfil **Administrador** não é criado pela opção **Criar conta**. As credenciais administrativas são configuradas pelo responsável técnico na hospedagem.
 
-## Limitações atuais
+## Administrador: preparar instituições e cursos
 
-Esta é uma aplicação de demonstração. O esquema usa `ddl-auto=update`; antes de operar com dados importantes, introduza migrations e backups. A entrega por email depende da aceitação da Brevo; uma resposta de sucesso da API de email significa aceite do provedor, não prova de entrega na caixa de entrada. O login guarda a sessão no navegador por até sete dias. Não armazene informações pessoais reais sem revisar privacidade e proteção de dados.
+### Entrar como administrador
+
+gmail:admin@gmail.com   
+senha:teste123
+
+### Cadastrar uma instituição
+
+1. No menu à esquerda, clique em **Instituições e cursos**.
+2. No primeiro formulário, preencha **Nome da instituição** (por exemplo, `Faculdade Exemplo`) e **Código** (por exemplo, `FEX`).
+3. Clique em **Cadastrar instituição**.
+4. Confirme que ela aparece na seção **Instituições cadastradas**.
+
+O código deve ser único. Se o sistema indicar que uma instituição já existe com o mesmo código, escolha outro.
+
+### Cadastrar um curso
+
+1. Ainda em **Instituições e cursos**, vá ao formulário de curso.
+2. Preencha **Nome do curso** (por exemplo, `Engenharia de Software`).
+3. Selecione a **Instituição** à qual o curso pertence.
+4. Clique em **Cadastrar curso** e confirme a inclusão em **Cursos cadastrados**.
+
+Crie os cursos **antes** de orientar alunos e professores a se cadastrarem. O aluno só pode selecionar cursos da instituição escolhida; o professor escolhe um curso de atuação.
+
+### Editar ou remover cadastros acadêmicos
+
+- Na lista **Instituições cadastradas**, use **Editar** para trocar nome e código, ou **Remover** para excluir a instituição.
+- Na lista **Cursos cadastrados**, use **Editar** para trocar o nome do curso, ou **Remover** para excluí-lo.
+- A edição abre caixas de diálogo do navegador. Confirme cada campo; **Cancelar** interrompe a alteração.
+- Não é possível remover uma instituição que possua cursos ou usuários vinculados. Não é possível remover um curso que possua professor ou matrículas vinculadas. O sistema mostra uma mensagem explicando o impedimento.
+
+### Iniciar e finalizar um semestre
+
+1. Clique em **Semestres** no menu.
+2. Em **Identificação do semestre**, escreva algo fácil de reconhecer, como `2026/2`.
+3. Clique em **Iniciar semestre**. Cada professor já cadastrado recebe **1.000 MC**.
+4. Consulte o semestre ativo e o **Histórico de semestres** na mesma página.
+5. Ao encerrar o período, clique em **Finalizar semestre**.
+
+Só pode existir **um semestre ativo** por vez. É preciso finalizar o atual antes de iniciar outro. Os saldos não utilizados **se acumulam**; finalizar um semestre não apaga moedas nem bloqueia os envios de reconhecimento. Um novo crédito ocorre somente quando outro semestre é iniciado.
+
+## Criar uma conta de aluno
+
+1. Na página inicial do site, clique em **Criar conta** e escolha **Aluno**.
+2. Preencha **Nome**, **E-mail** e **Senha**. A senha precisa ter pelo menos **8 caracteres**.
+3. Preencha **CPF**, **RG** e **Endereço**.
+4. Escolha uma **Instituição**. Os cursos dessa instituição serão exibidos abaixo.
+5. Marque **um ou mais cursos** em **Cursos**.
+6. Clique em **Criar minha conta**. O cadastro já cria as matrículas escolhidas e abre o painel do aluno.
+
+Se a lista de instituições ou cursos estiver vazia, o administrador precisa cadastrá-los primeiro. Se aparecer **E-mail já cadastrado** ou **CPF já cadastrado**, confira se você já possui uma conta; o sistema não permite repetir esses dados.
+
+### Ver e alterar matrículas
+
+1. Entre na conta de aluno e clique em **Meus cursos**.
+2. Veja os cursos em que você está matriculado.
+3. Para adicionar outro curso da **mesma instituição**, escolha-o em **Adicionar curso** e clique em **Matricular-se**.
+4. Para sair de um curso, clique em **Remover** ao lado dele e confirme a pergunta do navegador.
+
+Um curso já matriculado não aparece na lista de opções para nova matrícula. Ao remover uma matrícula, o aluno deixa de aparecer para o professor daquele curso. A remoção não apaga movimentações antigas do extrato.
+
+### Consultar saldo e extrato
+
+O saldo em **MC** aparece no topo do painel. Em **Visão geral**, veja as atividades recentes. Em **Meu extrato**, veja todas as movimentações: crédito recebido, reconhecimento recebido e resgate. Valores com sinal **+** entram na carteira; valores com sinal **−** saem dela. O extrato registra data, motivo e quantidade.
+
+### Resgatar uma vantagem
+
+1. Clique em **Vantagens**.
+2. Compare o **custo em MC** da vantagem com o seu saldo.
+3. Clique em **Resgatar** na vantagem desejada e confirme na janela do navegador.
+4. Após a confirmação, a página mostra um **código de cupom**. Guarde-o e confira também o email cadastrado, inclusive a pasta de spam.
+5. Apresente o código à empresa parceira. A empresa recebe o mesmo código por email para conferência.
+
+Se o saldo não for suficiente, o botão informa **Saldo insuficiente**. O custo é debitado do saldo quando o resgate é concluído. O extrato mostra a despesa, mas a interface atual **não possui uma tela para consultar novamente todos os códigos de cupons**; mantenha o email do cupom.
+
+## Criar uma conta de professor e reconhecer alunos
+
+### Cadastro
+
+1. Na página inicial, clique em **Criar conta** e escolha **Professor**.
+2. Preencha **Nome**, **E-mail**, **Senha** de pelo menos 8 caracteres e **CPF**.
+3. Escolha a **Instituição** e o **Curso** que leciona.
+4. Clique em **Criar minha conta**.
+
+O professor fica vinculado a **um curso**. Para que receba as 1.000 MC do semestre, cadastre-o **antes** de o administrador iniciar o semestre.
+
+### Enviar moedas a um aluno
+
+1. Entre na conta do professor. Confira o saldo no topo do painel e os alunos mostrados na **Visão geral**.
+2. No menu, clique em **Reconhecer aluno**.
+3. Em **Aluno**, selecione um estudante matriculado no curso que você leciona.
+4. Digite a **Quantidade de moedas** e uma **Mensagem de reconhecimento**.
+5. Clique em **Enviar moedas de reconhecimento**.
+6. Confira a mensagem de sucesso, o saldo atualizado e a saída em **Meu extrato**. O aluno verá a entrada em seu extrato e receberá um email.
+
+Só é possível enviar uma quantidade positiva até o saldo disponível. Se não houver aluno no seletor, verifique se ele se matriculou no **mesmo curso** do professor. Se o professor estiver sem saldo, peça ao administrador que confira a etapa de início do semestre. Se houver erro de envio de email, confira saldo e extrato antes de tentar novamente.
+
+## Criar uma conta de empresa e publicar vantagens
+
+### Cadastro
+
+1. Na página inicial, clique em **Criar conta** e escolha **Empresa**.
+2. Preencha **Nome**, **E-mail**, **Senha** de pelo menos 8 caracteres e **CNPJ**.
+3. Clique em **Criar minha conta**. Empresa não escolhe instituição nem curso.
+
+Use um email que a empresa acompanhe: nele chegarão os códigos de resgate para conferência.
+
+### Publicar uma vantagem
+
+1. Entre na conta da empresa e clique em **Minhas vantagens**.
+2. Em **Cadastrar vantagem**, preencha **Nome da vantagem**, **Custo em moedas** (número maior que zero) e **Descrição**.
+3. **URL da foto do produto** é opcional. Se utilizada, deve ser um link público de imagem que comece com `https://` ou `http://`.
+4. Clique em **Publicar vantagem**. Ela aparecerá em **Vantagens publicadas** e ficará disponível aos alunos.
+
+O campo de foto recebe um **link**, não um arquivo enviado do computador. Se a imagem não abrir, confira se o endereço é público e está correto.
+
+### Editar, remover e conferir um resgate
+
+- Nas vantagens publicadas, clique em **Editar** para alterar nome, descrição, custo e URL da foto. O navegador perguntará os campos um por vez.
+- Clique em **Remover** para desativar a vantagem. Ela deixa de aparecer aos alunos, mas os resgates anteriores continuam registrados. A interface atual não oferece botão para reativá-la; para voltar a oferecer o benefício, publique uma nova vantagem.
+- Quando um aluno resgatar uma vantagem, a empresa receberá um email com o **código de conferência**. Compare-o com o código apresentado pelo aluno. Atualmente não há uma tela no painel da empresa para listar resgates ou marcar cupons como utilizados.
+
+## Editar perfil, sair e desativar conta
+
+Essas opções aparecem na parte inferior do menu lateral para **aluno, professor e empresa**:
+
+- **Editar perfil:** o navegador perguntará nome, email e, para aluno, endereço. Depois perguntará uma nova senha. Deixe o campo da nova senha **vazio** para manter a senha atual. Confirme os diálogos para salvar. Se alterar o email, as próximas notificações serão enviadas para o novo endereço.
+- **Sair da conta:** encerra o acesso neste navegador. Para entrar novamente, use email e senha.
+- **Desativar conta:** após confirmação, bloqueia novos acessos. Os dados de histórico permanecem para preservar o extrato. **A interface não oferece reativação**, e o mesmo email/CPF/CNPJ permanece cadastrado; não use essa opção apenas para sair.
+
+O administrador possui **Sair da conta**, mas não usa o formulário comum de edição de perfil.
+
+## Exemplo completo para uma primeira demonstração
+
+1. O administrador entra e cadastra `Faculdade Exemplo` com o código `FEX`.
+2. Cadastra o curso `Engenharia de Software` nessa instituição.
+3. Uma pessoa cria uma conta de **Professor** associada a esse curso.
+4. Outra pessoa cria uma conta de **Aluno** na mesma instituição e seleciona o mesmo curso.
+5. Uma empresa cria uma conta de **Empresa** e publica uma vantagem chamada `Livro`, com custo de `50 MC`.
+6. O administrador entra novamente e inicia o semestre `2026/2`. O professor passa a ter `1.000 MC`.
+7. O professor abre **Reconhecer aluno** e envia `100 MC` ao aluno com uma mensagem.
+8. O aluno confirma que seu saldo passou a `100 MC`, abre **Vantagens** e resgata o livro por `50 MC`.
+9. O aluno confirma saldo de `50 MC` e consulta seu extrato. Ele e a empresa conferem os emails com o mesmo código do cupom.
+
+Para percorrer perfis diferentes no **mesmo navegador**, use **Sair da conta** antes de entrar com a conta seguinte. Use endereços de email reais aos quais você tenha acesso durante o teste de notificações.
+
+## Dúvidas e problemas comuns
+
+**A página está demorando para abrir.** No Render Free, o serviço pode hibernar quando fica sem visitas. Aguarde o primeiro carregamento e tente atualizar a página.
+
+**Não aparecem instituições ou cursos no cadastro.** O administrador precisa criá-los em **Instituições e cursos**. Se surgir um aviso de erro no catálogo, use **Tentar novamente**.
+
+**Não consigo criar uma conta.** Verifique os campos obrigatórios do perfil, a senha de pelo menos 8 caracteres e se email, CPF ou CNPJ já foram usados. Aluno precisa de RG, endereço e pelo menos um curso; professor precisa de um curso.
+
+**Esqueci a senha.** A versão atual não tem recuperação de senha pela tela inicial. Se ainda estiver conectado em outro navegador, use **Editar perfil** para trocá-la. Caso contrário, procure o responsável técnico pelo sistema.
+
+**Sou professor e não vejo alunos.** O aluno deve estar matriculado no curso escolhido no cadastro do professor. O professor vê apenas alunos desse curso.
+
+**Sou professor e meu saldo está zerado.** O administrador deve iniciar um semestre **depois** de o professor ser cadastrado. O crédito não é retroativo.
+
+**O botão de resgate está desativado.** O aluno precisa ter pelo menos a quantidade de MC indicada no custo da vantagem.
+
+**O email não chegou.** Confira o email cadastrado em **Editar perfil**, a pasta de spam e as configurações do remetente na Brevo. O envio pelo provedor pode atrasar ou ser recusado; se a operação mostrar erro, confira também saldo e extrato antes de repetir.
+
+**Preciso encontrar um cupom antigo.** A interface mostra o código no momento do resgate e o envia por email, mas ainda não lista cupons antigos em uma tela. Procure o email do cupom; o extrato mostra que o resgate ocorreu.
+
+o.
